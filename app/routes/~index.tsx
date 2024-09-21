@@ -1,44 +1,53 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/start";
-import * as fs from "fs";
-
-const filePath = "count.txt";
-
-async function readCount() {
-  return parseInt(
-    await fs.promises.readFile(filePath, "utf-8").catch(() => "0"),
-  );
-}
-
-const getCount = createServerFn("GET", () => {
-  return readCount();
-});
-
-const updateCount = createServerFn("POST", async (addBy: number) => {
-  const count = await readCount();
-  await fs.promises.writeFile(filePath, `${count + addBy}`);
-});
+import AddressComponent from "./AdressComponent";
+import BuildingInfoComponent from "./BuildingInfoComponent";
+import RestrictionsComponent from "./RestrictionsComponent";
+import VisualizationComponent from "./VisualizationComponent";
+import RecomendationsComponent from "./RecomendationsComponent";
+import CostsComponent from "./CostsComponent";
+import { useState } from "react";
+import CardComponent from "./CardComponent";
 
 export const Route = createFileRoute("/")({
   component: Home,
-  loader: async () => await getCount(),
 });
 
 function Home() {
   const router = useRouter();
   const state = Route.useLoaderData();
 
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+
+  function handleDataFromChild(city: string, address: string) {
+    setCity(city);
+    setAddress(address);
+  }
+
   return (
-    <div className="p-4">
-      <button
-        onClick={() => {
-          updateCount(1).then(() => {
-            router.invalidate();
-          });
-        }}
-      >
-        Add 1 to {state}?
-      </button>
+    <div>
+      <AddressComponent sendAddressToParent={handleDataFromChild} />
+      <div className="flex">
+        <div className="w-1/5 mx-8">
+          <CardComponent title="Building data">
+            <BuildingInfoComponent />
+          </CardComponent>
+          <CardComponent title="Restrictions">
+            <RestrictionsComponent />
+          </CardComponent>
+        </div>
+        <div className="w-3/5">
+          <VisualizationComponent address={address} city={city} />
+        </div>
+        <div className="w-1/5 mx-8">
+          <CardComponent title="Recomendations">
+            <RecomendationsComponent />
+          </CardComponent>
+          <CardComponent title="Costs">
+            <CostsComponent />
+          </CardComponent>
+        </div>
+      </div>
     </div>
   );
 }
