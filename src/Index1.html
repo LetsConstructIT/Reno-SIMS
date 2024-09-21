@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Building Surface Visualizer</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+}
+
+h1, h2 {
+    text-align: center;
+}
+
+.input-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.input-section label {
+    margin: 0 10px;
+}
+
+#address-input {
+    width: 300px;
+    padding: 5px;
+}
+
+#visualize-button {
+    margin-left: 20px;
+    padding: 5px 10px;
+}
+
+.content-section {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.table-container {
+    width: 45%;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead th {
+    background-color: #333;
+    color: #fff;
+    cursor: pointer;
+    padding: 10px;
+}
+
+tbody td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+#visualization {
+    width: 50%;
+    height: 600px;
+}
+
+
+</style>
+    <!-- Include Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Building Surface Visualizer</h1>
+        <div class="input-section">
+            <label for="city-select">Select City:</label>
+            <select id="city-select">
+                <option value="Tallinn">Tallinn</option>
+                <option value="Tartu">Tartu</option>
+                <option value="Narva">Narva</option>
+                <option value="Pärnu">Pärnu</option>
+                <option value="Kohtla-Järve">Kohtla-Järve</option>
+                <option value="Viljandi">Viljandi</option>
+                <option value="Rakvere">Rakvere</option>
+                <option value="Maardu">Maardu</option>
+                <option value="Sillamäe">Sillamäe</option>
+                <option value="Kuressaare">Kuressaare</option>
+            </select>
+
+            <label for="address-input">Enter Address:</label>
+            <input type="text" id="address-input" placeholder="Enter address">
+
+            <button id="visualize-button">Visualize</button>
+        </div>
+
+        <div class="content-section">
+            <div class="table-container">
+                <h2>Building Area Summary</h2>
+                <table id="summary-table">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable(0, 'summary-table')">Building ID</th>
+                            <th onclick="sortTable(1, 'summary-table')">Outer Wall Area (m²)</th>
+                            <th onclick="sortTable(2, 'summary-table')">Floor Area (m²)</th>
+                            <th onclick="sortTable(3, 'summary-table')">Roof Area (m²)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Summary data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Visualization Container -->
+            <div id="visualization"></div>
+        </div>
+    </div>
+
+    <script>// Function to classify surface types
+        function classifySurface(nz, epsilon = 0.02) {
+            if (nz > epsilon) {
+                return 'Roof';
+            } else if (nz < -epsilon) {
+                return 'Floor';
+            } else {
+                return 'Wall';
+            }
+        }
+        
+        // Function to get building codes from address
+        async function getBuildingCodes(fullAddress) {
+            const apiUrl = 'https://devkluster.ehr.ee/api/geoinfo/v1/getgeoobjectsbyaddress';
+            try {
+                const response = await fetch(`${apiUrl}?address=${encodeURIComponent(fullAddress)}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+                if (!response.ok) {
+                    throw new Error('Error fetching building codes');
+                }
+                const data = await response.json();
+                const buildingCodes = [];
+                data.forEach(feature => {
+                    const objectCode = feature.properties?.object_code;
+                    if (objectCode) {
+                        buildingCodes.push(objectCode);
+                    }
+                });
+                return buildingCodes;
+            } catch (error) {
+                console.error(error);
+                alert('Error fetching building codes.');
+                return null;
+            }
+        }
+        
+        // Function to get data from the API
+        async function getDataFromApi(buildingCodes) {
+            const apiUrl = 'https://devkluster.ehr.ee/api/3dtwin/v1/rest-api/particles';
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(buildingCodes),
+                });
+                if (!response.ok) {
+                    throw new Error('Error fetching data from API');
+                }
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error(error);
+                alert('Error fetching data from API.');
+                return null;
+            }
+        }
+        
+        // Function to visualize the data
+        function visualizeData(data) {
+            if (!Array.isArray(data)) {
+                alert('Unexpected data format received from API.');
+                return;
+            }
+        
+            const coords = {
+                'Roof': { x: [], y: [], z: [], i: [], j: [], k: [] },
+                'Wall': { x: [], y: [], z: [], i: [], j: [], k: [] },
+                'Floor': { x: [], y: [], z: [], i: [], j: [], k: [] }
+            };
+        
+            const colors = { 'Roof': 'red', 'Wall': 'gray', 'Floor': 'green' };
+        
+            const buildingAreas = {};
+        
+            data.forEach(buildingData => {
+                const buildingId = buildingData.ehr || 'Unknown';
+                const particles = buildingData.particles || [];
+        
+                if (!buildingAreas[buildingId]) {
+                    buildingAreas[buildingId] = { 'Roof': 0.0, 'Wall': 0.0, 'Floor': 0.0 };
+                }
+        
+                particles.forEach((particle, idx) => {
+                    const nz = particle.nz || 0;
+                    const area = particle.area || 0;
+                    const surfaceType = classifySurface(nz);
+        
+                    buildingAreas[buildingId][surfaceType] += area;
+        
+                    // Add data to coords
+                    const c = coords[surfaceType];
+                    const x0 = particle.x0, x1 = particle.x1, x2 = particle.x2;
+                    const y0 = particle.y0, y1 = particle.y1, y2 = particle.y2;
+                    const z0 = particle.z0, z1 = particle.z1, z2 = particle.z2;
+                    const idx0 = c.x.length;
+                    c.x.push(x0, x1, x2);
+                    c.y.push(y0, y1, y2);
+                    c.z.push(z0, z1, z2);
+                    c.i.push(idx0);
+                    c.j.push(idx0 + 1);
+                    c.k.push(idx0 + 2);
+                });
+            });
+        
+            // Update the summary table
+            const summaryTableBody = document.querySelector('#summary-table tbody');
+            summaryTableBody.innerHTML = '';
+            Object.keys(buildingAreas).forEach(buildingId => {
+                const areas = buildingAreas[buildingId];
+                const row = summaryTableBody.insertRow();
+                row.insertCell().textContent = buildingId;
+                row.insertCell().textContent = areas['Wall'].toFixed(2);
+                row.insertCell().textContent = areas['Floor'].toFixed(2);
+                row.insertCell().textContent = areas['Roof'].toFixed(2);
+            });
+        
+            // Create the 3D visualization
+            const meshes = [];
+            Object.keys(coords).forEach(surfaceType => {
+                const c = coords[surfaceType];
+                if (c.x.length > 0) {
+                    meshes.push({
+                        type: 'mesh3d',
+                        x: c.x,
+                        y: c.y,
+                        z: c.z,
+                        i: c.i,
+                        j: c.j,
+                        k: c.k,
+                        opacity: 0.5,
+                        color: colors[surfaceType],
+                        name: surfaceType,
+                        showscale: false
+                    });
+                }
+            });
+        
+            if (meshes.length === 0) {
+                alert('No particle data available to visualize.');
+                return;
+            }
+        
+            const layout = {
+                scene: {
+                    xaxis: { visible: false },
+                    yaxis: { visible: false },
+                    zaxis: { visible: false },
+                    aspectmode: 'data'
+                },
+                margin: { r: 0, l: 0, b: 0, t: 0 },
+                legend: { title: { text: 'Surface Types' } }
+            };
+        
+            Plotly.newPlot('visualization', meshes, layout);
+        }
+        
+        // Function to handle the visualize button click
+        document.getElementById('visualize-button').addEventListener('click', async () => {
+            const city = document.getElementById('city-select').value;
+            const address = document.getElementById('address-input').value.trim();
+        
+            if (city && address) {
+                const fullAddress = `${city}, ${address}`;
+                const buildingCodes = await getBuildingCodes(fullAddress);
+                if (buildingCodes && buildingCodes.length > 0) {
+                    const data = await getDataFromApi(buildingCodes);
+                    if (data) {
+                        visualizeData(data);
+                    } else {
+                        alert('No data received from the API.');
+                    }
+                } else {
+                    alert('No buildings found at the specified address.');
+                }
+            } else {
+                alert('Please select a city and enter an address.');
+            }
+        });
+        
+        // Function to sort tables
+        function sortTable(n, tableId) {
+            const table = document.getElementById(tableId);
+            let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+            switching = true;
+            dir = 'asc';
+        
+            while (switching) {
+                switching = false;
+                rows = table.rows;
+                for (i = 1; i < (rows.length - 1); i++) {
+                    shouldSwitch = false;
+                    x = rows[i].getElementsByTagName('TD')[n];
+                    y = rows[i + 1].getElementsByTagName('TD')[n];
+        
+                    let xContent = x.textContent || x.innerText;
+                    let yContent = y.textContent || y.innerText;
+        
+                    if (!isNaN(parseFloat(xContent)) && !isNaN(parseFloat(yContent))) {
+                        xContent = parseFloat(xContent);
+                        yContent = parseFloat(yContent);
+                    }
+        
+                    if (dir === 'asc') {
+                        if (xContent > yContent) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir === 'desc') {
+                        if (xContent < yContent) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+                if (shouldSwitch) {
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    switchcount++;
+                } else {
+                    if (switchcount === 0 && dir === 'asc') {
+                        dir = 'desc';
+                        switching = true;
+                    }
+                }
+            }
+        }
+        </script>
+</body>
+</html>
