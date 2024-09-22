@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Renovation Advice Tool with Dynamic Progress Bar</title>
+  <title>Renovation Advice Tool with Dynamic Progress Bar and Reset Functionality</title>
   
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -79,7 +79,7 @@
     }
 
     .container {
-      max-width: 1600px;
+      max-width: 1200px;
       margin: 0 auto;
       background-color: #ffffff; /* Fixed white for container */
       padding: 20px;
@@ -201,6 +201,12 @@
       transform: rotate(0deg);
     }
 
+    /* Reset Button Styles */
+    #resetBtn {
+      margin-top: 20px; /* Adds space above the button */
+      width: 100%; /* Full width button */
+    }
+
     /* Responsive Design */
     @media (max-width: 992px) {
       .progress-bar-container {
@@ -215,8 +221,8 @@
       }
 
       .progress-bar-filled {
-        width: 100%;
-        height: 0%;
+        height: 100%; /* Fill horizontally */
+        width: 0%; /* Start with 0% width */
       }
     }
 
@@ -247,17 +253,19 @@
       <!-- Left Column: Selection Form -->
       <div class="col-lg-3 col-md-4 mb-4">
         <div id="selectFields"></div>
+        <!-- New Reset Button Added Below -->
+        <button id="resetBtn" class="btn btn-secondary">Reset to Default</button>
       </div>
       
       <!-- Middle Column: Advice Display -->
-      <div class="col-lg-7 col-md-4 mb-4">
+      <div class="col-lg-6 col-md-4 mb-4">
         <div id="output" class="data-display" style="display: none;">
           <p id="data"></p>
         </div>
       </div>
       
       <!-- Right Column: Dynamic Progress Bar -->
-      <div class="col-lg-2 col-md-4 mb-4 d-flex justify-content-center align-items-end">
+      <div class="col-lg-3 col-md-4 mb-4 d-flex justify-content-center align-items-end">
         <div class="progress-bar-container">
           <div class="progress-bar-filled" id="progress-filled">
             <span id="progress-text">0%</span>
@@ -281,10 +289,13 @@
         "icon": "window-maximize",
         "options": [
           { "value": "no", "text": "No Changing" },
-          { "value": "u-value 1", "text": "Changing to U-value 1" },
-          { "value": "u-value 2", "text": "Changing to U-value 2" },
-          { "value": "u-value 3", "text": "Changing to U-value 3" },
-          { "value": "u-value 4", "text": "Changing to U-value 4" }
+          // Updated U-values as per user request
+          { "value": "0.5", "text": "U-value 0.5 W/m²K" },
+          { "value": "0.6", "text": "U-value 0.6 W/m²K" },
+          { "value": "0.7", "text": "U-value 0.7 W/m²K" },
+          { "value": "0.8", "text": "U-value 0.8 W/m²K" },
+          { "value": "0.9", "text": "U-value 0.9 W/m²K" },
+          { "value": "1.0", "text": "U-value 1.0 W/m²K" }
         ]
       },
       "Door Changes": {
@@ -477,7 +488,7 @@
       // Individual Renovation Advice
       // Window Changes
       if (window !== "no") {
-        advice.push(`<strong>Window Upgrade:</strong> Upgrading windows to ${window} can reduce heat loss and improve energy efficiency.`);
+        advice.push(`<strong>Window Upgrade:</strong> Upgrading windows to U-value ${window} W/m²K can reduce heat loss and improve energy efficiency.`);
       }
 
       // Door Changes
@@ -514,7 +525,7 @@
       return { adviceText: advice.join('<br><br>'), progressPercentage };
     }
 
-    // Function to display advice
+    // Function to display advice and update progress bar
     function displayAdvice({ adviceText, progressPercentage }) {
       const outputDiv = document.getElementById('output');
       const dataPara = document.getElementById('data');
@@ -526,7 +537,18 @@
       const progressFilled = document.getElementById('progress-filled');
       const progressText = document.getElementById('progress-text');
 
-      progressFilled.style.height = `${progressPercentage}%`;
+      // Determine layout based on screen size
+      const mediaQuery = window.matchMedia('(max-width: 768px)');
+      if (mediaQuery.matches) {
+        // Horizontal layout
+        progressFilled.style.height = '100%';
+        progressFilled.style.width = `${progressPercentage}%`;
+      } else {
+        // Vertical layout
+        progressFilled.style.width = '100%';
+        progressFilled.style.height = `${progressPercentage}%`;
+      }
+
       progressText.textContent = `${progressPercentage}%`;
     }
 
@@ -547,15 +569,22 @@
       }
     }
 
-    // Function to update Progress Bar based on selections
-    function updateProgressBar(selections) {
-      // This function is now integrated within displayAdvice
-      // and calculates the progress based on active selections.
-      // No additional logic is required here unless you want to separate concerns.
+    // Function to reset all selections to default values
+    function resetSelections() {
+      const selectElements = document.querySelectorAll('#selectFields select');
+      selectElements.forEach(select => {
+        select.value = 'no'; // Set each select to "no"
+      });
+
+      // Trigger selection change to update advice and progress bar
+      handleSelectionChange();
     }
 
     // Event listener for the Theme Toggle button
     document.getElementById('themeToggleBtn').addEventListener('click', toggleTheme);
+
+    // Event listener for the Reset button
+    document.getElementById('resetBtn').addEventListener('click', resetSelections);
 
     // Initialize the select fields on page load
     window.onload = generateSelectFields;
