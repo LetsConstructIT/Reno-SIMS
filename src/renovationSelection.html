@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Renovation Advice Tool</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    /* Default Theme Variables (Barbie Theme) */
+    :root {
+      --primary-color: #ff69b4; /* Barbie Pink */
+      --secondary-color: #d7009d; /* Barbie Purple */
+      --background-color: #f0f0f0; /* Barbie Grey */
+      --text-color: #000000; /* Black */
+      --accent-color: #ffb6c1; /* Barbie Light Pink */
+      --button-hover-color: #ff1493; /* Barbie Dark Pink */
+      --button-active-color: #d7009d; /* Barbie Purple */
+      --border-color: #ff69b4; /* Barbie Pink */
+      --advice-background: linear-gradient(135deg, #ff69b4 0%, #ffb6c1 100%); /* Barbie Gradient */
+      --advice-border: #d7009d; /* Barbie Purple */
+    }
+    
+    /* Simpsons Theme Variables */
+    .simpsons-theme {
+      --primary-color: #ffcc00; /* Simpsons Yellow */
+      --secondary-color: #0072bb; /* Simpsons Blue */
+      --background-color: #f0f0f0; /* Same Grey */
+      --text-color: #000000; /* Black */
+      --accent-color: #ffffff; /* White */
+      --button-hover-color: #ff6600; /* Orange */
+      --button-active-color: #0072bb; /* Simpsons Blue */
+      --border-color: #ffcc00; /* Simpsons Yellow */
+      --advice-background: linear-gradient(135deg, #ffcc00 0%, #ffffff 100%); /* Simpsons Gradient */
+      --advice-border: #0072bb; /* Simpsons Blue */
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--background-color);
+      padding: 20px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      color: var(--text-color);
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 20px;
+      font-weight: 700;
+      text-shadow: 2px 2px var(--secondary-color);
+      transition: color 0.3s ease;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: #ffffff; /* Fixed white for container */
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      border: 2px solid var(--border-color);
+      transition: border-color 0.3s ease;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      font-weight: 500;
+      color: var(--secondary-color);
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      transition: color 0.3s ease;
+    }
+
+    .form-group label i {
+      margin-right: 8px;
+      color: var(--primary-color);
+      transition: color 0.3s ease;
+    }
+
+    .form-group select {
+      height: 40px;
+      border-radius: 5px;
+      border: 1px solid var(--primary-color);
+      padding-left: 10px;
+      font-size: 14px;
+      background-color: var(--accent-color);
+      color: var(--text-color);
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .form-group select:focus {
+      border-color: var(--secondary-color);
+      box-shadow: 0 0 5px var(--secondary-color);
+      outline: none;
+    }
+
+    #getAdviceBtn {
+      background-color: var(--primary-color);
+      border: none;
+      border-radius: 5px;
+      padding: 12px 20px;
+      font-size: 16px;
+      font-weight: 500;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      width: 100%;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    #getAdviceBtn:hover {
+      background-color: var(--button-hover-color);
+      transform: translateY(-2px);
+    }
+
+    #getAdviceBtn:active {
+      background-color: var(--button-active-color);
+      transform: translateY(0);
+    }
+
+    .data-display {
+      padding: 20px;
+      background: var(--advice-background);
+      border-left: 5px solid var(--advice-border);
+      border-radius: 5px;
+      font-size: 16px;
+      color: var(--text-color);
+      height: 100%;
+      overflow-y: auto;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+      transition: background 0.3s ease, border-left-color 0.3s ease;
+    }
+
+    .data-display p {
+      margin: 0 0 10px 0;
+    }
+
+    /* Toggle Button Styles */
+    #themeToggleBtn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: var(--primary-color);
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      color: #ffffff;
+      font-size: 18px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    #themeToggleBtn:hover {
+      background-color: var(--button-hover-color);
+      transform: rotate(20deg);
+    }
+
+    #themeToggleBtn:active {
+      background-color: var(--button-active-color);
+      transform: rotate(0deg);
+    }
+
+    /* Reduce vertical spacing for a denser layout */
+    .form-group label,
+    .form-group select,
+    #getAdviceBtn {
+      margin-bottom: 8px;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 992px) {
+      .row > .col-md-6 {
+        margin-bottom: 20px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .data-display {
+        border-left: none;
+        border-top: 5px solid var(--advice-border);
+      }
+
+      #themeToggleBtn {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body class="barbie-theme"> <!-- Default Theme: Barbie -->
+
+  <!-- Theme Toggle Button -->
+  <button id="themeToggleBtn" title="Toggle Theme">
+    <i class="fas fa-adjust"></i>
+  </button>
+
+  <h1><i class="fas fa-tools"></i> Renovation Advice Tool</h1>
+
+  <div class="container">
+    <div class="row">
+      <!-- Selection Form -->
+      <div class="col-md-6">
+        <!-- Select Fields will be generated here -->
+        <div id="selectFields"></div>
+        <button id="getAdviceBtn" class="btn btn-primary"><i class="fas fa-lightbulb"></i> Get Advice</button>
+      </div>
+      
+      <!-- Advice Display -->
+      <div class="col-md-6">
+        <div id="output" class="data-display" style="display: none;">
+          <p id="data"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS and dependencies (Popper.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Font Awesome JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  
+  <script>
+    // JSON data for select options
+    const selectOptions = {
+      "Window Changes": {
+        "id": "window",
+        "icon": "window-maximize",
+        "options": [
+          { "value": "no", "text": "No Changing" },
+          { "value": "u-value 1", "text": "Changing to U-value 1" },
+          { "value": "u-value 2", "text": "Changing to U-value 2" },
+          { "value": "u-value 3", "text": "Changing to U-value 3" },
+          { "value": "u-value 4", "text": "Changing to U-value 4" }
+        ]
+      },
+      "Door Changes": {
+        "id": "door",
+        "icon": "door-closed",
+        "options": [
+          { "value": "no", "text": "No Changes" },
+          { "value": "level 1", "text": "Level 1" },
+          { "value": "level 2", "text": "Level 2" },
+          { "value": "level 3", "text": "Level 3" }
+        ]
+      },
+      "Outer Wall Insulation Changes": {
+        "id": "outerWall",
+        "icon": "house-chimney",
+        "options": [
+          { "value": "no", "text": "No Insulation" },
+          { "value": "50mm", "text": "Insulation 50mm" },
+          { "value": "100mm", "text": "Insulation 100mm" },
+          { "value": "150mm", "text": "Insulation 150mm" },
+          { "value": "200mm", "text": "Insulation 200mm" },
+          { "value": "250mm", "text": "Insulation 250mm" },
+          { "value": "300mm", "text": "Insulation 300mm" }
+        ]
+      },
+      "Roof Insulation Changes": {
+        "id": "roofInsulation",
+        "icon": "sun",
+        "options": [
+          { "value": "no", "text": "No Insulation" },
+          { "value": "100mm", "text": "Insulation 100mm" },
+          { "value": "200mm", "text": "Insulation 200mm" },
+          { "value": "300mm", "text": "Insulation 300mm" },
+          { "value": "400mm", "text": "Insulation 400mm" },
+          { "value": "500mm", "text": "Insulation 500mm" },
+          { "value": "600mm", "text": "Insulation 600mm" }
+        ]
+      },
+      "Solar Panels": {
+        "id": "solarPanels",
+        "icon": "solar-panel",
+        "options": [
+          { "value": "no", "text": "No Solar Panels" },
+          { "value": "10%", "text": "10% of Roof Area" },
+          { "value": "20%", "text": "20% of Roof Area" },
+          { "value": "30%", "text": "30% of Roof Area" },
+          { "value": "40%", "text": "40% of Roof Area" },
+          { "value": "50%", "text": "50% of Roof Area" }
+        ]
+      },
+      "Heating System Changes": {
+        "id": "heatingSystem",
+        "icon": "fire-alt",
+        "options": [
+          { "value": "no", "text": "No Changes" },
+          { "value": "district heating", "text": "District Heating" },
+          { "value": "gas heating", "text": "Gas Heating" },
+          { "value": "wood heating", "text": "Wood Heating" },
+          { "value": "ground heat pump", "text": "Ground Heat Pump" },
+          { "value": "air2water heat pump", "text": "Air to Water Heat Pump" },
+          { "value": "heat pump", "text": "Heat Pump" }
+        ]
+      }
+    };
+
+    // Function to dynamically generate select fields based on JSON data
+    function generateSelectFields() {
+      const selectContainer = document.getElementById('selectFields');
+      for (const [label, config] of Object.entries(selectOptions)) {
+        // Create form group
+        const formGroup = document.createElement('div');
+        formGroup.className = 'form-group';
+  
+        // Create label with icon
+        const selectLabel = document.createElement('label');
+        selectLabel.setAttribute('for', config.id);
+        selectLabel.innerHTML = `<i class="fas fa-${config.icon}"></i> ${label}:`;
+        formGroup.appendChild(selectLabel);
+  
+        // Create select element with Bootstrap styling
+        const selectElement = document.createElement('select');
+        selectElement.className = 'form-select';
+        selectElement.id = config.id;
+  
+        // Populate options from JSON
+        config.options.forEach(option => {
+          const opt = document.createElement('option');
+          opt.value = option.value;
+          opt.textContent = option.text;
+          // Set "no" as default selected
+          if (option.value === "no") {
+            opt.selected = true;
+          }
+          selectElement.appendChild(opt);
+        });
+  
+        formGroup.appendChild(selectElement);
+        selectContainer.appendChild(formGroup);
+      }
+    }
+
+    // Function to generate advice based on selections using if-else rules
+    function generateAdvice(selections) {
+      const [window, door, outerWall, roofInsulation, solarPanels, heatingSystem] = selections;
+      const advice = [];
+
+      // Rule 1: Simultaneous Window & Wall Renovation
+      if (outerWall !== "no") {
+        if (window !== "no") {
+          advice.push(`<strong>Simultaneous Window & Wall Renovation:</strong> When both windows and walls are being replaced or insulated, it is more cost-efficient to complete them in the same phase. This avoids reworking the window-wall junction, reducing additional thermal bridge heat loss and preventing indoor moisture condensation.`);
+        } else {
+          advice.push(`<strong>Simultaneous Wall & Window Consideration:</strong> Even if you're not changing the windows, consider upgrading them alongside wall insulation to prevent reworking the window-wall junction, reducing thermal bridge heat loss, and preventing indoor moisture condensation.`);
+        }
+      }
+
+      // Rule 2: Simultaneous Wall & Roof Renovation
+      if (outerWall !== "no" && roofInsulation !== "no") {
+        advice.push(`<strong>Simultaneous Wall & Roof Renovation:</strong> When both walls and roof are being renovated, it is crucial to extend the roof eaves by approximately 0.5 meters. This prevents wind-driven rainwater from spilling onto the façade, avoiding deterioration through freeze-thaw cycles and mold growth.`);
+      }
+
+      // Rule 3: Ventilation System Improvement with Heating System Upgrades
+      if (heatingSystem !== "no") {
+        advice.push(`<strong>Ventilation System Improvement:</strong> When upgrading to a ${heatingSystem}, ensure to also improve the ventilation system alongside building airtightness upgrades. This prevents higher indoor moisture levels, reducing the risk of mold and condensation.`);
+      }
+
+      // Individual Renovation Advice
+      // Window Changes
+      if (window !== "no") {
+        advice.push(`<strong>Window Upgrade:</strong> Upgrading windows to ${window} can reduce heat loss and improve energy efficiency.`);
+      }
+
+      // Door Changes
+      if (door !== "no") {
+        advice.push(`<strong>Door Upgrade:</strong> Upgrading doors to ${door} can enhance the building's insulation and reduce energy consumption.`);
+      }
+
+      // Outer Wall Insulation
+      if (outerWall !== "no") {
+        advice.push(`<strong>Outer Wall Insulation:</strong> Adding ${outerWall} outer wall insulation improves thermal performance and reduces heat loss.`);
+      }
+
+      // Roof Insulation
+      if (roofInsulation !== "no") {
+        advice.push(`<strong>Roof Insulation:</strong> Insulating the roof with ${roofInsulation} can significantly improve energy efficiency and reduce heating costs.`);
+      }
+
+      // Solar Panels
+      if (solarPanels !== "no") {
+        advice.push(`<strong>Solar Panels:</strong> Installing solar panels covering ${solarPanels} of the roof area can contribute to energy savings and sustainability.`);
+      }
+
+      // Heating System Changes
+      if (heatingSystem !== "no") {
+        advice.push(`<strong>Heating System Upgrade:</strong> Switching to ${heatingSystem} can provide a more efficient and environmentally friendly heating solution.`);
+      }
+
+      // If no changes are selected
+      if (advice.length === 0) {
+        advice.push("No changes selected. Consider upgrading windows, doors, insulation, solar panels, or heating systems to improve energy efficiency.");
+      }
+
+      return advice.join('<br><br>');
+    }
+
+    // Function to toggle themes
+    function toggleTheme() {
+      const body = document.body;
+      const themeToggleBtn = document.getElementById('themeToggleBtn');
+      if (body.classList.contains('barbie-theme')) {
+        body.classList.remove('barbie-theme');
+        body.classList.add('simpsons-theme');
+        themeToggleBtn.innerHTML = '<i class="fas fa-mug-hot"></i>'; // Change icon to represent Simpsons
+        themeToggleBtn.title = "Switch to Barbie Theme";
+      } else {
+        body.classList.remove('simpsons-theme');
+        body.classList.add('barbie-theme');
+        themeToggleBtn.innerHTML = '<i class="fas fa-adjust"></i>'; // Change icon back to adjust
+        themeToggleBtn.title = "Switch to Simpsons Theme";
+      }
+    }
+
+    // Event listener for the Get Advice button
+    document.getElementById('getAdviceBtn').addEventListener('click', function() {
+      // Gather selections
+      const windowSelection = document.getElementById('window').value;
+      const doorSelection = document.getElementById('door').value;
+      const outerWallSelection = document.getElementById('outerWall').value;
+      const roofInsulationSelection = document.getElementById('roofInsulation').value;
+      const solarPanelsSelection = document.getElementById('solarPanels').value;
+      const heatingSystemSelection = document.getElementById('heatingSystem').value;
+
+      const selections = [
+        windowSelection,
+        doorSelection,
+        outerWallSelection,
+        roofInsulationSelection,
+        solarPanelsSelection,
+        heatingSystemSelection
+      ];
+
+      // Generate advice based on selections
+      const advice = generateAdvice(selections);
+      document.getElementById('data').innerHTML = advice;
+      document.getElementById('output').style.display = 'block';
+    });
+
+    // Event listener for the Theme Toggle button
+    document.getElementById('themeToggleBtn').addEventListener('click', toggleTheme);
+
+    // Initialize the select fields on page load
+    window.onload = generateSelectFields;
+  </script>
+
+</body>
+</html>
