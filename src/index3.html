@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Building Surface Visualizer with OpenStreetMap</title>
+    <!-- Include Plotly.js CDN -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Include Proj4js CDN for coordinate transformations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.6.2/proj4.js"></script>
+    <style>
+        /* Your existing CSS styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #fdf6e3;
+        }
+        h1 {
+            text-align: center;
+            color: #f1c40f;
+            margin-bottom: 40px;
+        }
+        .main-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .left-section {
+            flex: 1;
+            min-width: 300px;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .input-section {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .input-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        select, input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #visualize-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            align-self: flex-start;
+            transition: background-color 0.3s;
+        }
+        #visualize-button:hover {
+            background-color: #2980b9;
+        }
+        .error-message {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #f1c40f;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .table-wrapper {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+            background-color: #fff;
+        }
+        th, td {
+            border: 1px solid #aaa;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            cursor: pointer;
+            background-color: #f2f2f2;
+            position: relative;
+        }
+        th:hover {
+            background-color: #ddd;
+        }
+        th::after {
+            content: '';
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 6px solid transparent;
+        }
+        th.asc::after {
+            border-bottom-color: #000;
+        }
+        th.desc::after {
+            border-top-color: #000;
+        }
+        .right-section {
+            flex: 2;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        #plotly-chart {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+        @media (max-width: 1200px) {
+            .main-container {
+                flex-direction: row;
+            }
+        }
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            #plotly-chart {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Building Surface Visualizer with OpenStreetMap</h1>
+    <div class="main-container">
+        <!-- Left Section: Inputs and Table -->
+        <div class="left-section">
+            <!-- Input Controls -->
+            <div class="input-section">
+                <div class="input-controls">
+                    <div class="input-group">
+                        <label for="city-select">Select City:</label>
+                        <select id="city-select">
+                            <option>Tallinn</option>
+                            <option>Tartu</option>
+                            <option>Narva</option>
+                            <option>Pärnu</option>
+                            <option>Kohtla-Järve</option>
+                            <option>Viljandi</option>
+                            <option>Rakvere</option>
+                            <option>Maardu</option>
+                            <option>Sillamäe</option>
+                            <option>Kuressaare</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="address-input">Enter Address:</label>
+                        <input type="text" id="address-input" placeholder="e.g., Main Street 123">
+                    </div>
+                    <button id="visualize-button">Visualize</button>
+                </div>
+                <div class="error-message" id="error-message"></div>
+                <div class="loader" id="loader"></div>
+            </div>
+            <!-- Summary Table -->
+            <div class="table-wrapper">
+                <h2>Building Areas Summary</h2>
+                <table id="summary-table">
+                    <thead>
+                        <tr>
+                            <th data-column="Building ID">Building ID</th>
+                            <th data-column="Outer Wall Area (m²)">Outer Wall Area (m²)</th>
+                            <th data-column="Floor Area (m²)">Floor Area (m²)</th>
+                            <th data-column="Roof Area (m²)">Roof Area (m²)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Summary data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Right Section: Plotly Chart -->
+        <div class="right-section">
+            <div id="plotly-chart"></div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.6.2/proj4.js"></script>
+    <script>
+        // Define the EPSG:3301 projection
+       // proj4.defs("EPSG:3301","+proj=lcc +lat_0=57.51755393055556 +lon_0=24 +lat_1=58 +lat_2=59.33333333333334 +x_0=500000 +y_0=6375000 +ellps=GRS80 +units=m +no_defs");
+        proj4.defs("EPSG:3301","+proj=lambert_conformal_conic +lat_0=57.51755393055556 +lon_0=24 +lat_1=58 +lat_2=59.33333333333334 +x_0=500000 +y_0=6375000 +datum=ETRS89 +units=m +no_defs");
+
+        // WGS84 is already defined in Proj4js as 'EPSG:4326'
+
+        // Function to classify surface types
+        function classifySurface(nz, epsilon = 0.02) {
+            if (nz > epsilon) {
+                return 'Roof';
+            } else if (nz < -epsilon) {
+                return 'Floor';
+            } else {
+                return 'Wall';
+            }
+        }
+
+        // Helper function to calculate polygon area using the Shoelace formula
+        function calculatePolygonArea(coordinates) {
+            const n = coordinates.length;
+            if (n < 3) return 0.0; // Not a polygon
+            let area = 0.0;
+            for (let i = 0; i < n; i++) {
+                const [x1, y1] = coordinates[i];
+                const [x2, y2] = coordinates[(i + 1) % n];
+                area += (x1 * y2) - (x2 * y1);
+            }
+            return Math.abs(area) / 2.0;
+        }
+
+        // Function to sort table columns
+        function sortTable(table, column, ascending) {
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const index = Array.from(table.querySelectorAll('th')).findIndex(th => th.dataset.column === column);
+
+            rows.sort((a, b) => {
+                const aText = a.children[index].textContent;
+                const bText = b.children[index].textContent;
+                const aNum = parseFloat(aText);
+                const bNum = parseFloat(bText);
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return ascending ? aNum - bNum : bNum - aNum;
+                }
+                return ascending ? aText.localeCompare(bText) : bText.localeCompare(aText);
+            });
+
+            // Remove existing rows
+            while (tbody.firstChild) {
+                tbody.removeChild(tbody.firstChild);
+            }
+
+            // Append sorted rows
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        // Function to fetch building codes and geometry based on address
+        async function getBuildingCodesAndGeometry(fullAddress) {
+            const apiUrl = 'https://devkluster.ehr.ee/api/geoinfo/v1/getgeoobjectsbyaddress';
+            try {
+                const response = await fetch(`${apiUrl}?address=${encodeURIComponent(fullAddress)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                const data = await response.json();
+                const buildingDataList = data.map(feature => {
+                    const properties = feature.properties || {};
+                    const geometry = feature.geometry || {};
+                    const objectCode = properties.object_code;
+                    if (objectCode && Object.keys(geometry).length > 0) {
+                        return {
+                            object_code: objectCode,
+                            geometry: geometry
+                        };
+                    }
+                    return null;
+                }).filter(item => item !== null);
+                return buildingDataList;
+            } catch (error) {
+                console.error('Error fetching building codes:', error);
+                throw error;
+            }
+        }
+
+        // Function to fetch particle data from API
+        async function getDataFromAPI(userNumbers) {
+            const apiUrl = 'https://devkluster.ehr.ee/api/3dtwin/v1/rest-api/particles';
+            const headers = {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            };
+            const data = userNumbers; // Should be a list of strings
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(data)
+                });
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                const responseData = await response.json();
+                return responseData;
+            } catch (error) {
+                console.error('Error fetching data from API:', error);
+                throw error;
+            }
+        }
+
+        // Function to calculate the bounding box of all buildings
+        function calculateBoundingBox(buildingDataList) {
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+            buildingDataList.forEach(building => {
+                const geometry = building.geometry || {};
+                if (geometry.type === 'Polygon') {
+                    const coordinatesList = geometry.coordinates || [];
+                    if (coordinatesList.length > 0) {
+                        const exteriorRing = coordinatesList[0];
+                        exteriorRing.forEach(coord => {
+                            const [x, y] = coord;
+                            if (x < minX) minX = x;
+                            if (x > maxX) maxX = x;
+                            if (y < minY) minY = y;
+                            if (y > maxY) maxY = y;
+                        });
+                    }
+                } else if (geometry.type === 'MultiPolygon') {
+                    const coordinatesList = geometry.coordinates || [];
+                    coordinatesList.forEach(polygon => {
+                        const exteriorRing = polygon[0];
+                        exteriorRing.forEach(coord => {
+                            const [x, y] = coord;
+                            if (x < minX) minX = x;
+                            if (x > maxX) maxX = x;
+                            if (y < minY) minY = y;
+                            if (y > maxY) maxY = y;
+                        });
+                    });
+                }
+            });
+
+            return { minX, minY, maxX, maxY };
+        }
+
+        // Function to extend the bounding box by a specified distance (e.g., 100 meters)
+        function extendBoundingBox(bbox, distance) {
+            return {
+                minX: bbox.minX - distance,
+                minY: bbox.minY - distance,
+                maxX: bbox.maxX + distance,
+                maxY: bbox.maxY + distance
+            };
+        }
+
+        // Function to fetch a static map image from OpenStreetMap
+        async function fetchStaticMapImage(bbox) {
+            
+            const width = 1024; // Width of the image in pixels
+            const height = 1024; // Height of the image in pixels
+
+            const { minX, minY, maxX, maxY } = bbox;
+
+            console.log({ minX, minY, maxX, maxY });
+            // Convert bounding box coordinates from EPSG:3301 to WGS84 (EPSG:4326)
+            const [minLon, minLat] = proj4('EPSG:3301', 'EPSG:4326', [minX, minY]);
+            const [maxLon, maxLat] = proj4('EPSG:3301', 'EPSG:4326', [maxX, maxY]);
+
+            // Swap minLat and maxLat if necessary
+            const southLat = Math.min(minLat, maxLat);
+            const northLat = Math.max(minLat, maxLat);
+            const westLon = Math.min(minLon, maxLon);
+            const eastLon = Math.max(minLon, maxLon);
+
+            // Construct the URL for the static map image
+            const mapUrl = `https://staticmap.openstreetmap.de/staticmap.php?bbox=${westLon},${southLat},${eastLon},${northLat}&size=${width}x${height}&maptype=mapnik`;
+
+            // Log the transformed coordinates
+            console.log('EPSG:3301 Bounding Box:', bbox);
+            console.log('Transformed to WGS84:', {
+                westLon,
+                southLat,
+                eastLon,
+                northLat
+            });
+            console.log('Map URL:', mapUrl);
+
+            return mapUrl;
+        }
+
+        // Function to visualize data using Plotly
+        async function visualizeData(data, buildingDataList) {
+            // Check if data is a list
+            if (!Array.isArray(data)) {
+                alert('Unexpected data format received from API.');
+                return;
+            }
+
+            // Initialize coordinates and indices per surface type
+            const coords = {
+                'Roof': {x: [], y: [], z: [], i: [], j: [], k: []},
+                'Wall': {x: [], y: [], z: [], i: [], j: [], k: []},
+                'Floor': {x: [], y: [], z: [], i: [], j: [], k: []}
+            };
+            // The Simpsons Color Palette
+            const colors = {
+                'Roof': '#0033A0',       // Marge's Blue
+                'Wall': '#FEDD00',       // Simpsons Yellow
+                'Floor': '#FF7F00',      // Bart's Orange
+                'Ground Area': '#2ECC71' // Lisa's Green
+            };
+            const buildingAreas = {}; // {building_id: {Roof: area, Wall: area, Floor: area}}
+            const floorZValues = [];
+            const objectCodeToGeometry = {};
+            buildingDataList.forEach(bd => {
+                objectCodeToGeometry[bd.object_code] = bd.geometry;
+            });
+
+            data.forEach(buildingData => {
+                const buildingId = buildingData.ehr || 'Unknown';
+                const particles = buildingData.particles || [];
+
+                if (!buildingAreas[buildingId]) {
+                    buildingAreas[buildingId] = {'Roof': 0.0, 'Wall': 0.0, 'Floor': 0.0};
+                }
+
+                particles.forEach((particle, idx) => {
+                    const nz = parseFloat(particle.nz) || 0;
+                    const area = parseFloat(particle.area) || 0;
+                    const surfaceType = classifySurface(nz);
+
+                    // Update building areas
+                    buildingAreas[buildingId][surfaceType] += area;
+
+                    // Collect floor z-values
+                    if (surfaceType === 'Floor') {
+                        const z0 = parseFloat(particle.z0) || 0;
+                        const z1 = parseFloat(particle.z1) || 0;
+                        const z2 = parseFloat(particle.z2) || 0;
+                        const avgZ = (z0 + z1 + z2) / 3.0;
+                        floorZValues.push(avgZ);
+                    }
+
+                    // Add data to coords
+                    const c = coords[surfaceType];
+                    const x0 = parseFloat(particle.x0) || 0;
+                    const x1 = parseFloat(particle.x1) || 0;
+                    const x2 = parseFloat(particle.x2) || 0;
+                    const y0 = parseFloat(particle.y0) || 0;
+                    const y1 = parseFloat(particle.y1) || 0;
+                    const y2 = parseFloat(particle.y2) || 0;
+                    const zCoord0 = parseFloat(particle.z0) || 0;
+                    const zCoord1 = parseFloat(particle.z1) || 0;
+                    const zCoord2 = parseFloat(particle.z2) || 0;
+                    const idx0 = c.x.length;
+                    c.x.push(x0, x1, x2);
+                    c.y.push(y0, y1, y2);
+                    c.z.push(zCoord0, zCoord1, zCoord2);
+                    c.i.push(idx0);
+                    c.j.push(idx0 + 1);
+                    c.k.push(idx0 + 2);
+                });
+            });
+
+            // Calculate global average floor z-level
+            const globalFloorZ = floorZValues.length > 0 ? floorZValues.reduce((a, b) => a + b, 0) / floorZValues.length : 0;
+
+            // Populate Building Areas Summary Table
+            const summaryTableBody = document.querySelector('#summary-table tbody');
+            summaryTableBody.innerHTML = '';
+            for (const [buildingId, areas] of Object.entries(buildingAreas)) {
+                const row = document.createElement('tr');
+                const objectCode = buildingId;
+                const geometry = objectCodeToGeometry[objectCode] || {};
+                let groundArea = 0.0;
+                if (geometry.type === 'Polygon') {
+                    const coordinatesList = geometry.coordinates || [];
+                    if (coordinatesList.length > 0) {
+                        const exteriorRing = coordinatesList[0];
+                        groundArea += calculatePolygonArea(exteriorRing);
+                    }
+                } else if (geometry.type === 'MultiPolygon') {
+                    const coordinatesList = geometry.coordinates || [];
+                    coordinatesList.forEach(polygon => {
+                        const exteriorRing = polygon[0];
+                        groundArea += calculatePolygonArea(exteriorRing);
+                    });
+                }
+                // Ground area is calculated but not displayed
+
+                row.innerHTML = `
+                    <td>${buildingId}</td>
+                    <td>${areas['Wall'].toFixed(2)}</td>
+                    <td>${areas['Floor'].toFixed(2)}</td>
+                    <td>${areas['Roof'].toFixed(2)}</td>
+                `;
+                summaryTableBody.appendChild(row);
+            }
+
+            // Create Mesh3d traces for each surface type
+            const meshes = [];
+            for (const [surfaceType, c] of Object.entries(coords)) {
+                if (c.x.length > 0) {
+                    meshes.push({
+                        type: 'mesh3d',
+                        x: c.x,
+                        y: c.y,
+                        z: c.z,
+                        i: c.i,
+                        j: c.j,
+                        k: c.k,
+                        opacity: 0.6,
+                        color: colors[surfaceType],
+                        name: surfaceType,
+                        showscale: false
+                    });
+                }
+            }
+
+            // Calculate bounding box and extend it by 100 meters
+            const bbox = calculateBoundingBox(buildingDataList);
+            const extendedBbox = extendBoundingBox(bbox, 100);
+
+            // Fetch static map image
+            const mapUrl = await fetchStaticMapImage(extendedBbox);
+
+            // Prepare data for the map image
+            const imageWidth = extendedBbox.maxX - extendedBbox.minX;
+            const imageHeight = extendedBbox.maxY - extendedBbox.minY;
+
+            // Create an image trace to display the map
+            const mapImage = {
+                source: mapUrl,
+                xref: 'x',
+                yref: 'y',
+                x: extendedBbox.minX,
+                y: extendedBbox.maxY,
+                sizex: imageWidth,
+                sizey: imageHeight,
+                sizing: 'stretch',
+                layer: 'below',
+                opacity: 1
+            };
+
+            if (meshes.length === 0) {
+                alert('No particle data available to visualize.');
+                return;
+            }
+
+            // Create the Plotly figure
+            const layout = {
+                scene: {
+                    xaxis: {
+                        visible: false,
+                        range: [extendedBbox.minX, extendedBbox.maxX]
+                    },
+                    yaxis: {
+                        visible: false,
+                        range: [extendedBbox.minY, extendedBbox.maxY]
+                    },
+                    zaxis: {
+                        visible: false
+                    },
+                    aspectmode: 'data'
+                },
+                margin: { r: 20, l: 20, b: 20, t: 20 },
+                legend: { title: { text: 'Surface Types' } },
+                images: [mapImage]
+            };
+                      
+            Plotly.newPlot('plotly-chart', meshes, layout);
+        }
+
+        // Function to handle the visualize button click
+        async function handleVisualizeClick() {
+            const city = document.getElementById('city-select').value;
+            const address = document.getElementById('address-input').value.trim();
+            const errorMessage = document.getElementById('error-message');
+            const loader = document.getElementById('loader');
+
+            errorMessage.textContent = '';
+            if (!city || !address) {
+                errorMessage.textContent = 'Please select a city and enter an address.';
+                return;
+            }
+
+            const fullAddress = `${city}, ${address}`;
+            loader.style.display = 'block';
+
+            try {
+                const buildingDataList = await getBuildingCodesAndGeometry(fullAddress);
+                if (buildingDataList.length === 0) {
+                    errorMessage.textContent = 'No buildings found at the specified address.';
+                    loader.style.display = 'none';
+                    return;
+                }
+                const objectCodes = buildingDataList.map(bd => bd.object_code);
+                const data = await getDataFromAPI(objectCodes);
+                if (!data || data.length === 0) {
+                    errorMessage.textContent = 'No data received from the API.';
+                    loader.style.display = 'none';
+                    return;
+                }
+                await visualizeData(data, buildingDataList);
+            } catch (error) {
+                console.error(error);
+                errorMessage.textContent = 'An error occurred while fetching data. Please try again.';
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        // Add event listeners to table headers for sorting
+        document.querySelectorAll('th').forEach(th => {
+            th.addEventListener('click', () => {
+                const column = th.dataset.column;
+                const table = th.closest('table');
+                const currentOrder = th.getAttribute('data-order') || 'asc';
+                const ascending = currentOrder === 'desc';
+                sortTable(table, column, ascending);
+                th.setAttribute('data-order', ascending ? 'asc' : 'desc');
+
+                // Update arrow indicators
+                document.querySelectorAll(`th[data-column="${column}"]`).forEach(header => {
+                    header.classList.remove('asc', 'desc');
+                    header.classList.add(ascending ? 'asc' : 'desc');
+                });
+            });
+        });
+
+        // Add event listener to the visualize button
+        document.getElementById('visualize-button').addEventListener('click', handleVisualizeClick);
+    </script>
+</body>
+</html>
