@@ -47,7 +47,7 @@ function Home() {
             <BuildingInfoComponent buildingInfo={buildingInfo} />
           </CardComponent>
           <CardComponent title="Restrictions">
-            <RestrictionsComponent />
+            <RestrictionsComponent cadastreUnit={buildingInfo?.cadastralCode} />
           </CardComponent>
         </div>
         <div className="w-3/5">

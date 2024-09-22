@@ -7,6 +7,7 @@ import {
   calculateBoundingBox,
   extendBoundingBox,
 } from "./Services";
+import proj4 from "proj4";
 
 function VisualizationComponent({
   address,
@@ -34,12 +35,28 @@ function VisualizationComponent({
       const buildingDataList = await getBuildingCodesAndGeometry(fullAddress);
       // Calculate bounding box and extend it by 100 meters
       const bbox = calculateBoundingBox(buildingDataList);
-      const extendedBbox = bbox; //extendBoundingBox(bbox, 100);
-
-      console.log(extendedBbox);
       setCityGmlUrl(
-        `https://devkluster.ehr.ee/api/3dtwin/v1/rest-api/citygml?type=terrain&bbox=${extendedBbox.minY}&bbox=${extendedBbox.minX}&bbox=${extendedBbox.maxY}&bbox=${extendedBbox.maxX}`,
+        `https://devkluster.ehr.ee/api/3dtwin/v1/rest-api/citygml?type=terrain&bbox=${bbox.minY}&bbox=${bbox.minX}&bbox=${bbox.maxY}&bbox=${bbox.maxX}`,
       );
+
+      const extendedBbox = extendBoundingBox(bbox, 100);
+      console.log(extendedBbox);
+
+      proj4.defs(
+        "EPSG:3301",
+        "+proj=lambert_conformal_conic +lat_0=57.51755393055556 +lon_0=24 +lat_1=58 +lat_2=59.33333333333334 +x_0=500000 +y_0=6375000 +datum=ETRS89 +units=m +no_defs",
+      );
+
+      const [minLon, minLat] = proj4("EPSG:3301", "EPSG:4326", [
+        extendedBbox.minX,
+        extendedBbox.minY,
+      ]);
+      const [maxLon, maxLat] = proj4("EPSG:3301", "EPSG:4326", [
+        extendedBbox.maxX,
+        extendedBbox.maxY,
+      ]);
+
+      console.log(`${minLon},${minLat},${maxLon},${maxLat}`);
 
       const ehr = buildingCodes[0].toLocaleString(); //"101036328";
       const buildingData = await getBuildingInfo(ehr);
