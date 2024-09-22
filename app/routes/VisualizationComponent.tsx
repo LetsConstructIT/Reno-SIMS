@@ -34,8 +34,9 @@ function VisualizationComponent({
       const buildingDataList = await getBuildingCodesAndGeometry(fullAddress);
       // Calculate bounding box and extend it by 100 meters
       const bbox = calculateBoundingBox(buildingDataList);
-      const extendedBbox = extendBoundingBox(bbox, 100);
+      const extendedBbox = bbox; //extendBoundingBox(bbox, 100);
 
+      console.log(extendedBbox);
       setCityGmlUrl(
         `https://devkluster.ehr.ee/api/3dtwin/v1/rest-api/citygml?type=terrain&bbox=${extendedBbox.minY}&bbox=${extendedBbox.minX}&bbox=${extendedBbox.maxY}&bbox=${extendedBbox.maxX}`,
       );

@@ -24,7 +24,14 @@ function CostsComponent() {
         </span>
       </span>
       <div className="border-t pt-2 mt-2 flex flex-col gap-2">
-        <button>Find government support</button>
+        <button
+          onClick={() => {
+            window.open("https://kliimaministeerium.ee/en");
+          }}
+        >
+          Find government support
+        </button>
+
         <button>Find home loans</button>
       </div>
     </div>
