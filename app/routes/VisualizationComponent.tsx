@@ -41,8 +41,14 @@ function VisualizationComponent({
     <div>
       <div className="flex flex-col justify-center">
         <iframe
+          src={
+            "./citygml.html?url=https://devkluster.ehr.ee/api/3dtwin/v1/rest-api/citygml?type=terrain&bbox=6587732&bbox=542018&bbox=6587871&bbox=542128"
+          }
+        />
+        <iframe
           src={`https://fotoladu.maaamet.ee/etak.php?${coords}`}
           height={400}
+          className="flex my-4"
         />
         <img src={`https://kypilt.kataster.ee/api/${cadastralCode}`} />
       </div>
