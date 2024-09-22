@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Renovation Advice Tool</title>
+  <title>Renovation Advice Tool with Dynamic Progress Bar</title>
   
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -27,6 +27,15 @@
       --border-color: #ff69b4; /* Barbie Pink */
       --advice-background: linear-gradient(135deg, #ff69b4 0%, #ffb6c1 100%); /* Barbie Gradient */
       --advice-border: #d7009d; /* Barbie Purple */
+      
+      /* Progress Bar Colors */
+      --progress-filled-color: #4CAF50; /* Green */
+      --progress-unfilled-color: #ddd; /* Light Grey */
+      
+      /* Enlarged Progress Bar Dimensions */
+      --progress-bar-height: 720px; /* Doubled from 360px */
+      --progress-bar-width: 60px; /* Doubled from 30px */
+      --progress-font-size: 14px; /* Increased from 12px for better readability */
     }
     
     /* Simpsons Theme Variables */
@@ -41,6 +50,15 @@
       --border-color: #ffcc00; /* Simpsons Yellow */
       --advice-background: linear-gradient(135deg, #ffcc00 0%, #ffffff 100%); /* Simpsons Gradient */
       --advice-border: #0072bb; /* Simpsons Blue */
+      
+      /* Progress Bar Colors */
+      --progress-filled-color: #ff6600; /* Orange */
+      --progress-unfilled-color: #ddd; /* Light Grey */
+      
+      /* Enlarged Progress Bar Dimensions */
+      --progress-bar-height: 720px; /* Doubled from 360px */
+      --progress-bar-width: 60px; /* Doubled from 30px */
+      --progress-font-size: 14px; /* Increased from 12px for better readability */
     }
 
     body {
@@ -61,7 +79,7 @@
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1600px;
       margin: 0 auto;
       background-color: #ffffff; /* Fixed white for container */
       padding: 20px;
@@ -108,29 +126,6 @@
       outline: none;
     }
 
-    #getAdviceBtn {
-      background-color: var(--primary-color);
-      border: none;
-      border-radius: 5px;
-      padding: 12px 20px;
-      font-size: 16px;
-      font-weight: 500;
-      transition: background-color 0.3s ease, transform 0.2s ease;
-      width: 100%;
-      color: #ffffff;
-      cursor: pointer;
-    }
-
-    #getAdviceBtn:hover {
-      background-color: var(--button-hover-color);
-      transform: translateY(-2px);
-    }
-
-    #getAdviceBtn:active {
-      background-color: var(--button-active-color);
-      transform: translateY(0);
-    }
-
     .data-display {
       padding: 20px;
       background: var(--advice-background);
@@ -148,6 +143,36 @@
       margin: 0 0 10px 0;
     }
 
+    /* Dynamic Progress Bar Styles */
+    .progress-bar-container {
+      position: relative;
+      width: var(--progress-bar-width); /* 60px */
+      height: var(--progress-bar-height); /* 720px */
+      background-color: var(--progress-unfilled-color); /* Light grey */
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: border-color 0.3s ease, background-color 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .progress-bar-filled {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 0%;
+      background-color: var(--progress-filled-color);
+      transition: height 0.3s ease, background-color 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: var(--progress-font-size);
+      text-align: center;
+      padding: 5px;
+      box-sizing: border-box;
+    }
+
     /* Toggle Button Styles */
     #themeToggleBtn {
       position: fixed;
@@ -163,6 +188,7 @@
       cursor: pointer;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       transition: background-color 0.3s ease, transform 0.2s ease;
+      z-index: 1000;
     }
 
     #themeToggleBtn:hover {
@@ -175,24 +201,28 @@
       transform: rotate(0deg);
     }
 
-    /* Reduce vertical spacing for a denser layout */
-    .form-group label,
-    .form-group select,
-    #getAdviceBtn {
-      margin-bottom: 8px;
+    /* Responsive Design */
+    @media (max-width: 992px) {
+      .progress-bar-container {
+        height: var(--progress-bar-height); /* Maintain enlarged height */
+      }
     }
 
-    /* Responsive Adjustments */
-    @media (max-width: 992px) {
-      .row > .col-md-6 {
-        margin-bottom: 20px;
+    @media (max-width: 768px) {
+      .progress-bar-container {
+        width: 100%; /* Full width on smaller screens */
+        height: 80px; /* Reduced height for horizontal layout */
+      }
+
+      .progress-bar-filled {
+        width: 100%;
+        height: 0%;
       }
     }
 
     @media (max-width: 576px) {
-      .data-display {
-        border-left: none;
-        border-top: 5px solid var(--advice-border);
+      .progress-bar-container {
+        height: var(--progress-bar-height); /* Maintain enlarged height */
       }
 
       #themeToggleBtn {
@@ -206,7 +236,7 @@
 <body class="barbie-theme"> <!-- Default Theme: Barbie -->
 
   <!-- Theme Toggle Button -->
-  <button id="themeToggleBtn" title="Toggle Theme">
+  <button id="themeToggleBtn" title="Switch to Simpsons Theme">
     <i class="fas fa-adjust"></i>
   </button>
 
@@ -214,17 +244,24 @@
 
   <div class="container">
     <div class="row">
-      <!-- Selection Form -->
-      <div class="col-md-6">
-        <!-- Select Fields will be generated here -->
+      <!-- Left Column: Selection Form -->
+      <div class="col-lg-3 col-md-4 mb-4">
         <div id="selectFields"></div>
-        <button id="getAdviceBtn" class="btn btn-primary"><i class="fas fa-lightbulb"></i> Get Advice</button>
       </div>
       
-      <!-- Advice Display -->
-      <div class="col-md-6">
+      <!-- Middle Column: Advice Display -->
+      <div class="col-lg-7 col-md-4 mb-4">
         <div id="output" class="data-display" style="display: none;">
           <p id="data"></p>
+        </div>
+      </div>
+      
+      <!-- Right Column: Dynamic Progress Bar -->
+      <div class="col-lg-2 col-md-4 mb-4 d-flex justify-content-center align-items-end">
+        <div class="progress-bar-container">
+          <div class="progress-bar-filled" id="progress-filled">
+            <span id="progress-text">0%</span>
+          </div>
         </div>
       </div>
     </div>
@@ -310,6 +347,16 @@
           { "value": "air2water heat pump", "text": "Air to Water Heat Pump" },
           { "value": "heat pump", "text": "Heat Pump" }
         ]
+      },
+      "Ventilation": { // New Select Field
+        "id": "ventilation",
+        "icon": "fan",
+        "options": [
+          { "value": "no", "text": "No Changes" },
+          { "value": "natural", "text": "Natural Ventilation" },
+          { "value": "mechanical_exhaust", "text": "Mechanical Ventilation (Exhaust)" },
+          { "value": "mechanical_supply_exhaust", "text": "Mechanical Ventilation (Supply/Exhaust)" }
+        ]
       }
     };
 
@@ -320,18 +367,18 @@
         // Create form group
         const formGroup = document.createElement('div');
         formGroup.className = 'form-group';
-  
+
         // Create label with icon
         const selectLabel = document.createElement('label');
         selectLabel.setAttribute('for', config.id);
         selectLabel.innerHTML = `<i class="fas fa-${config.icon}"></i> ${label}:`;
         formGroup.appendChild(selectLabel);
-  
+
         // Create select element with Bootstrap styling
         const selectElement = document.createElement('select');
         selectElement.className = 'form-select';
         selectElement.id = config.id;
-  
+
         // Populate options from JSON
         config.options.forEach(option => {
           const opt = document.createElement('option');
@@ -343,16 +390,58 @@
           }
           selectElement.appendChild(opt);
         });
-  
+
+        // Add event listener for real-time updates
+        selectElement.addEventListener('change', handleSelectionChange);
+
         formGroup.appendChild(selectElement);
         selectContainer.appendChild(formGroup);
       }
     }
 
+    // Function to handle selection changes
+    function handleSelectionChange() {
+      // Gather all current selections
+      const selections = getCurrentSelections();
+
+      // Generate and display advice
+      const advice = generateAdvice(selections);
+      displayAdvice(advice);
+
+      // Update the progress bar
+      updateProgressBar(selections);
+    }
+
+    // Function to get current selections
+    function getCurrentSelections() {
+      const windowSelection = document.getElementById('window').value;
+      const doorSelection = document.getElementById('door').value;
+      const outerWallSelection = document.getElementById('outerWall').value;
+      const roofInsulationSelection = document.getElementById('roofInsulation').value;
+      const solarPanelsSelection = document.getElementById('solarPanels').value;
+      const heatingSystemSelection = document.getElementById('heatingSystem').value;
+      const ventilationSelection = document.getElementById('ventilation').value;
+
+      return [
+        windowSelection,
+        doorSelection,
+        outerWallSelection,
+        roofInsulationSelection,
+        solarPanelsSelection,
+        heatingSystemSelection,
+        ventilationSelection
+      ];
+    }
+
     // Function to generate advice based on selections using if-else rules
     function generateAdvice(selections) {
-      const [window, door, outerWall, roofInsulation, solarPanels, heatingSystem] = selections;
+      const [window, door, outerWall, roofInsulation, solarPanels, heatingSystem, ventilation] = selections;
       const advice = [];
+
+      // Count the number of active selections (excluding 'no')
+      const activeSelections = selections.filter(selection => selection !== "no").length;
+      const totalSelections = selections.length;
+      const progressPercentage = Math.round((activeSelections / totalSelections) * 100);
 
       // Rule 1: Simultaneous Window & Wall Renovation
       if (outerWall !== "no") {
@@ -370,7 +459,19 @@
 
       // Rule 3: Ventilation System Improvement with Heating System Upgrades
       if (heatingSystem !== "no") {
-        advice.push(`<strong>Ventilation System Improvement:</strong> When upgrading to a ${heatingSystem}, ensure to also improve the ventilation system alongside building airtightness upgrades. This prevents higher indoor moisture levels, reducing the risk of mold and condensation.`);
+        const heatingSystemFormatted = heatingSystem.replace(/_/g, ' ');
+        advice.push(`<strong>Ventilation System Improvement:</strong> When upgrading to a ${heatingSystemFormatted}, ensure to also improve the ventilation system alongside building airtightness upgrades. This prevents higher indoor moisture levels, reducing the risk of mold and condensation.`);
+      }
+
+      // Rule 4: Ventilation Recommendations
+      if (ventilation !== "no") {
+        if (ventilation === "natural") {
+          advice.push(`<strong>Natural Ventilation:</strong> Ensure that windows can be easily opened to allow for regular airflow. Consider installing trickle vents or other passive ventilation solutions to maintain indoor air quality.`);
+        } else if (ventilation === "mechanical_exhaust") {
+          advice.push(`<strong>Mechanical Ventilation (Exhaust):</strong> Install exhaust fans in high-moisture areas like bathrooms and kitchens to effectively remove stale air and reduce humidity levels.`);
+        } else if (ventilation === "mechanical_supply_exhaust") {
+          advice.push(`<strong>Mechanical Ventilation (Supply/Exhaust):</strong> Implement a balanced ventilation system with both supply and exhaust capabilities. This ensures optimal air quality and energy efficiency by maintaining consistent airflow and reducing energy loss.`);
+        }
       }
 
       // Individual Renovation Advice
@@ -401,15 +502,32 @@
 
       // Heating System Changes
       if (heatingSystem !== "no") {
-        advice.push(`<strong>Heating System Upgrade:</strong> Switching to ${heatingSystem} can provide a more efficient and environmentally friendly heating solution.`);
+        const heatingSystemFormatted = heatingSystem.replace(/_/g, ' ');
+        advice.push(`<strong>Heating System Upgrade:</strong> Switching to ${heatingSystemFormatted} can provide a more efficient and environmentally friendly heating solution.`);
       }
 
       // If no changes are selected
       if (advice.length === 0) {
-        advice.push("No changes selected. Consider upgrading windows, doors, insulation, solar panels, or heating systems to improve energy efficiency.");
+        advice.push("No changes selected. Consider upgrading windows, doors, insulation, solar panels, heating systems, or ventilation to improve energy efficiency.");
       }
 
-      return advice.join('<br><br>');
+      return { adviceText: advice.join('<br><br>'), progressPercentage };
+    }
+
+    // Function to display advice
+    function displayAdvice({ adviceText, progressPercentage }) {
+      const outputDiv = document.getElementById('output');
+      const dataPara = document.getElementById('data');
+      
+      dataPara.innerHTML = adviceText;
+      outputDiv.style.display = 'block';
+
+      // Update progress bar
+      const progressFilled = document.getElementById('progress-filled');
+      const progressText = document.getElementById('progress-text');
+
+      progressFilled.style.height = `${progressPercentage}%`;
+      progressText.textContent = `${progressPercentage}%`;
     }
 
     // Function to toggle themes
@@ -419,40 +537,22 @@
       if (body.classList.contains('barbie-theme')) {
         body.classList.remove('barbie-theme');
         body.classList.add('simpsons-theme');
-        themeToggleBtn.innerHTML = '<i class="fas fa-mug-hot"></i>'; // Change icon to represent Simpsons
+        themeToggleBtn.innerHTML = '<i class="fas fa-mug-hot"></i>'; // Simpsons Icon
         themeToggleBtn.title = "Switch to Barbie Theme";
       } else {
         body.classList.remove('simpsons-theme');
         body.classList.add('barbie-theme');
-        themeToggleBtn.innerHTML = '<i class="fas fa-adjust"></i>'; // Change icon back to adjust
+        themeToggleBtn.innerHTML = '<i class="fas fa-adjust"></i>'; // Barbie Icon
         themeToggleBtn.title = "Switch to Simpsons Theme";
       }
     }
 
-    // Event listener for the Get Advice button
-    document.getElementById('getAdviceBtn').addEventListener('click', function() {
-      // Gather selections
-      const windowSelection = document.getElementById('window').value;
-      const doorSelection = document.getElementById('door').value;
-      const outerWallSelection = document.getElementById('outerWall').value;
-      const roofInsulationSelection = document.getElementById('roofInsulation').value;
-      const solarPanelsSelection = document.getElementById('solarPanels').value;
-      const heatingSystemSelection = document.getElementById('heatingSystem').value;
-
-      const selections = [
-        windowSelection,
-        doorSelection,
-        outerWallSelection,
-        roofInsulationSelection,
-        solarPanelsSelection,
-        heatingSystemSelection
-      ];
-
-      // Generate advice based on selections
-      const advice = generateAdvice(selections);
-      document.getElementById('data').innerHTML = advice;
-      document.getElementById('output').style.display = 'block';
-    });
+    // Function to update Progress Bar based on selections
+    function updateProgressBar(selections) {
+      // This function is now integrated within displayAdvice
+      // and calculates the progress based on active selections.
+      // No additional logic is required here unless you want to separate concerns.
+    }
 
     // Event listener for the Theme Toggle button
     document.getElementById('themeToggleBtn').addEventListener('click', toggleTheme);
