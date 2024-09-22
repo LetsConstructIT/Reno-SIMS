@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Renovation Advice Tool with Dynamic Progress Bar and Reset Functionality</title>
+  <title>Renovation Advice Tool</title>
   
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -32,10 +32,10 @@
       --progress-filled-color: #4CAF50; /* Green */
       --progress-unfilled-color: #ddd; /* Light Grey */
       
-      /* Enlarged Progress Bar Dimensions */
-      --progress-bar-height: 720px; /* Doubled from 360px */
-      --progress-bar-width: 60px; /* Doubled from 30px */
-      --progress-font-size: 14px; /* Increased from 12px for better readability */
+      /* Progress Bar Dimensions */
+      --progress-bar-height: 480px; /* Reduced from 720px */
+      --progress-bar-width: 40px; /* Reduced from 60px */
+      --progress-font-size: 12px; /* Reduced from 14px */
     }
     
     /* Simpsons Theme Variables */
@@ -55,16 +55,16 @@
       --progress-filled-color: #ff6600; /* Orange */
       --progress-unfilled-color: #ddd; /* Light Grey */
       
-      /* Enlarged Progress Bar Dimensions */
-      --progress-bar-height: 720px; /* Doubled from 360px */
-      --progress-bar-width: 60px; /* Doubled from 30px */
-      --progress-font-size: 14px; /* Increased from 12px for better readability */
+      /* Progress Bar Dimensions */
+      --progress-bar-height: 480px; /* Reduced from 720px */
+      --progress-bar-width: 40px; /* Reduced from 60px */
+      --progress-font-size: 12px; /* Reduced from 14px */
     }
 
     body {
       font-family: 'Roboto', sans-serif;
       background-color: var(--background-color);
-      padding: 20px;
+      padding: 10px; /* Reduced from 20px */
       transition: background-color 0.3s ease, color 0.3s ease;
       color: var(--text-color);
     }
@@ -72,49 +72,50 @@
     h1 {
       text-align: center;
       color: var(--primary-color);
-      margin-bottom: 20px;
+      margin-bottom: 15px; /* Reduced from 20px */
       font-weight: 700;
-      text-shadow: 2px 2px var(--secondary-color);
+      text-shadow: 1px 1px var(--secondary-color); /* Reduced shadow size */
       transition: color 0.3s ease;
+      font-size: 1.75rem; /* Reduced from larger size */
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1000px; /* Reduced from 1200px */
       margin: 0 auto;
       background-color: #ffffff; /* Fixed white for container */
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-      border: 2px solid var(--border-color);
+      padding: 15px; /* Reduced from 20px */
+      border-radius: 10px; /* Reduced from 15px */
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Adjusted shadow */
+      border: 1px solid var(--border-color); /* Reduced border thickness */
       transition: border-color 0.3s ease;
     }
 
     .form-group {
-      margin-bottom: 15px;
+      margin-bottom: 10px; /* Reduced from 15px */
     }
 
     .form-group label {
       font-weight: 500;
       color: var(--secondary-color);
-      margin-bottom: 5px;
+      margin-bottom: 3px; /* Reduced from 5px */
       display: flex;
       align-items: center;
-      font-size: 14px;
+      font-size: 13px; /* Reduced from 14px */
       transition: color 0.3s ease;
     }
 
     .form-group label i {
-      margin-right: 8px;
+      margin-right: 6px; /* Reduced from 8px */
       color: var(--primary-color);
       transition: color 0.3s ease;
     }
 
     .form-group select {
-      height: 40px;
-      border-radius: 5px;
+      height: 35px; /* Reduced from 40px */
+      border-radius: 4px; /* Reduced from 5px */
       border: 1px solid var(--primary-color);
-      padding-left: 10px;
-      font-size: 14px;
+      padding-left: 8px; /* Reduced from 10px */
+      font-size: 13px; /* Reduced from 14px */
       background-color: var(--accent-color);
       color: var(--text-color);
       transition: background-color 0.3s ease, border-color 0.3s ease;
@@ -122,38 +123,38 @@
 
     .form-group select:focus {
       border-color: var(--secondary-color);
-      box-shadow: 0 0 5px var(--secondary-color);
+      box-shadow: 0 0 3px var(--secondary-color); /* Reduced shadow size */
       outline: none;
     }
 
     .data-display {
-      padding: 20px;
+      padding: 15px; /* Reduced from 20px */
       background: var(--advice-background);
-      border-left: 5px solid var(--advice-border);
-      border-radius: 5px;
-      font-size: 16px;
+      border-left: 3px solid var(--advice-border); /* Reduced border thickness */
+      border-radius: 4px; /* Reduced from 5px */
+      font-size: 14px; /* Reduced from 16px */
       color: var(--text-color);
       height: 100%;
       overflow-y: auto;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.1); /* Adjusted shadow */
       transition: background 0.3s ease, border-left-color 0.3s ease;
     }
 
     .data-display p {
-      margin: 0 0 10px 0;
+      margin: 0 0 8px 0; /* Reduced from 10px */
     }
 
     /* Dynamic Progress Bar Styles */
     .progress-bar-container {
       position: relative;
-      width: var(--progress-bar-width); /* 60px */
-      height: var(--progress-bar-height); /* 720px */
+      width: var(--progress-bar-width); /* 40px */
+      height: var(--progress-bar-height); /* 480px */
       background-color: var(--progress-unfilled-color); /* Light grey */
-      border: 2px solid var(--border-color);
-      border-radius: 10px;
+      border: 1px solid var(--border-color); /* Reduced border thickness */
+      border-radius: 8px; /* Reduced border radius */
       overflow: hidden;
       transition: border-color 0.3s ease, background-color 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Reduced shadow */
     }
 
     .progress-bar-filled {
@@ -167,33 +168,33 @@
       align-items: center;
       justify-content: center;
       color: #fff;
-      font-size: var(--progress-font-size);
+      font-size: var(--progress-font-size); /* 12px */
       text-align: center;
-      padding: 5px;
+      padding: 2px; /* Reduced from 5px */
       box-sizing: border-box;
     }
 
     /* Toggle Button Styles */
     #themeToggleBtn {
       position: fixed;
-      top: 20px;
-      right: 20px;
+      top: 10px; /* Reduced from 20px */
+      right: 10px; /* Reduced from 20px */
       background-color: var(--primary-color);
       border: none;
       border-radius: 50%;
-      width: 50px;
-      height: 50px;
+      width: 40px; /* Reduced from 50px */
+      height: 40px; /* Reduced from 50px */
       color: #ffffff;
-      font-size: 18px;
+      font-size: 16px; /* Reduced from 18px */
       cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Reduced shadow */
       transition: background-color 0.3s ease, transform 0.2s ease;
       z-index: 1000;
     }
 
     #themeToggleBtn:hover {
       background-color: var(--button-hover-color);
-      transform: rotate(20deg);
+      transform: rotate(15deg); /* Reduced rotation */
     }
 
     #themeToggleBtn:active {
@@ -203,21 +204,23 @@
 
     /* Reset Button Styles */
     #resetBtn {
-      margin-top: 20px; /* Adds space above the button */
+      margin-top: 10px; /* Reduced from 20px */
       width: 100%; /* Full width button */
+      padding: 6px 0; /* Reduced padding */
+      font-size: 13px; /* Reduced font size */
     }
 
     /* Responsive Design */
     @media (max-width: 992px) {
       .progress-bar-container {
-        height: var(--progress-bar-height); /* Maintain enlarged height */
+        height: var(--progress-bar-height); /* 480px */
       }
     }
 
     @media (max-width: 768px) {
       .progress-bar-container {
         width: 100%; /* Full width on smaller screens */
-        height: 80px; /* Reduced height for horizontal layout */
+        height: 60px; /* Further reduced height for horizontal layout */
       }
 
       .progress-bar-filled {
@@ -228,13 +231,13 @@
 
     @media (max-width: 576px) {
       .progress-bar-container {
-        height: var(--progress-bar-height); /* Maintain enlarged height */
+        height: var(--progress-bar-height); /* 480px */
       }
 
       #themeToggleBtn {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
+        width: 35px; /* Further reduced */
+        height: 35px;
+        font-size: 14px;
       }
     }
   </style>
@@ -251,21 +254,21 @@
   <div class="container">
     <div class="row">
       <!-- Left Column: Selection Form -->
-      <div class="col-lg-3 col-md-4 mb-4">
+      <div class="col-lg-3 col-md-4 mb-3">
         <div id="selectFields"></div>
-        <!-- New Reset Button Added Below -->
-        <button id="resetBtn" class="btn btn-secondary">Reset to Default</button>
+        <!-- Reset Button -->
+        <button id="resetBtn" class="btn btn-secondary btn-sm">Reset to Default</button>
       </div>
       
       <!-- Middle Column: Advice Display -->
-      <div class="col-lg-6 col-md-4 mb-4">
+      <div class="col-lg-6 col-md-4 mb-3">
         <div id="output" class="data-display" style="display: none;">
           <p id="data"></p>
         </div>
       </div>
       
       <!-- Right Column: Dynamic Progress Bar -->
-      <div class="col-lg-3 col-md-4 mb-4 d-flex justify-content-center align-items-end">
+      <div class="col-lg-3 col-md-4 mb-3 d-flex justify-content-center align-items-end">
         <div class="progress-bar-container">
           <div class="progress-bar-filled" id="progress-filled">
             <span id="progress-text">0%</span>
