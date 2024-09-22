@@ -13527,24 +13527,22 @@ const url = getParamValue("url");
 fetch(url)
   .then((r) => r.blob())
   .then((blob) => {
-    displayCitGml(blob);
+    displayCitGml(blob, "terrain");
+  })
+  .then(() => {
+    fetch(url.replace("terrain", "lod2"))
+      .then((r) => r.blob())
+      .then((blob) => {
+        displayCitGml(blob, "lod2");
+      });
   });
 
-const urlTerrain = url.replace("terrain", "lod2");
-fetch(urlTerrain)
-  .then((r) => r.blob())
-  .then((blob) => {
-    displayCitGml(blob);
-  });
-
-function displayCitGml(blob) {
+function displayCitGml(blob, gmlType) {
   camera = undefined;
-  //parserFile = this.files[0];
-  const fileName = url.indexOf("terrain") > 0 ? "terrain" : "lod2";
-  parserFile = blobToFile(blob, fileName);
+  parserFile = blobToFile(blob, gmlType);
 
   fileSize = parserFile.size;
-  if (parserFile.name.startsWith("terrain")) {
+  if (gmlType == "terrain") {
     color = [1.0, 1.0, 1.0];
   } else {
     color = [0.0, 0.447, 0.807];

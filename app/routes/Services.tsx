@@ -120,3 +120,88 @@ export type BuildingInfo = {
   closedNetArea: number;
   cadastralCode: string;
 };
+
+export async function getBuildingCodesAndGeometry(fullAddress: string) {
+  const apiUrl =
+    "https://devkluster.ehr.ee/api/geoinfo/v1/getgeoobjectsbyaddress";
+  try {
+    const response = await fetch(
+      `${apiUrl}?address=${encodeURIComponent(fullAddress)}`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      },
+    );
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+    const data = await response.json();
+    const buildingDataList = data
+      .map((feature) => {
+        const properties = feature.properties || {};
+        const geometry = feature.geometry || {};
+        const objectCode = properties.object_code;
+        if (objectCode && Object.keys(geometry).length > 0) {
+          return {
+            object_code: objectCode,
+            geometry: geometry,
+          };
+        }
+        return null;
+      })
+      .filter((item) => item !== null);
+    return buildingDataList;
+  } catch (error) {
+    console.error("Error fetching building codes:", error);
+    throw error;
+  }
+}
+
+// Function to calculate the bounding box of all buildings
+export function calculateBoundingBox(buildingDataList) {
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
+
+  buildingDataList.forEach((building) => {
+    const geometry = building.geometry || {};
+    if (geometry.type === "Polygon") {
+      const coordinatesList = geometry.coordinates || [];
+      if (coordinatesList.length > 0) {
+        const exteriorRing = coordinatesList[0];
+        exteriorRing.forEach((coord) => {
+          const [x, y] = coord;
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        });
+      }
+    } else if (geometry.type === "MultiPolygon") {
+      const coordinatesList = geometry.coordinates || [];
+      coordinatesList.forEach((polygon) => {
+        const exteriorRing = polygon[0];
+        exteriorRing.forEach((coord) => {
+          const [x, y] = coord;
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        });
+      });
+    }
+  });
+
+  return { minX, minY, maxX, maxY };
+}
+
+// Function to extend the bounding box by a specified distance (e.g., 100 meters)
+export function extendBoundingBox(bbox, distance) {
+  return {
+    minX: bbox.minX - distance,
+    minY: bbox.minY - distance,
+    maxX: bbox.maxX + distance,
+    maxY: bbox.maxY + distance,
+  };
+}

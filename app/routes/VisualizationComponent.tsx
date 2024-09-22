@@ -3,6 +3,9 @@ import {
   getBuildingCodes,
   getBuildingInfo,
   getBuildingParticles,
+  getBuildingCodesAndGeometry,
+  calculateBoundingBox,
+  extendBoundingBox,
 } from "./Services";
 
 function VisualizationComponent({
@@ -14,6 +17,9 @@ function VisualizationComponent({
 }) {
   const [coords, setCoords] = useState("x=542084&y=6587844");
   const [cadastralCode, setCadastralCode] = useState("78401:109:3120");
+  const [cityGmlUrl, setCityGmlUrl] = useState(
+    "https://devkluster.ehr.ee/api/3dtwin/v1/rest-api/citygml?type=terrain&bbox=6587732&bbox=542018&bbox=6587871&bbox=542128",
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,7 +29,17 @@ function VisualizationComponent({
       //const particles = await getBuildingParticles(buildingCodes);
       //console.log(particles);
 
-      const ehr = buildingCodes[0]; //"101036328";
+      const buildingDataList = await getBuildingCodesAndGeometry(fullAddress);
+      // Calculate bounding box and extend it by 100 meters
+      const bbox = calculateBoundingBox(buildingDataList);
+      const extendedBbox = extendBoundingBox(bbox, 100);
+
+      console.log(extendedBbox);
+      setCityGmlUrl(
+        `https://devkluster.ehr.ee/api/3dtwin/v1/rest-api/citygml?type=terrain&bbox=${extendedBbox.minY}&bbox=${extendedBbox.minX}&bbox=${extendedBbox.maxY}&bbox=${extendedBbox.maxX}`,
+      );
+
+      const ehr = buildingCodes[0].toLocaleString(); //"101036328";
       const buildingData = await getBuildingInfo(ehr);
       console.log(buildingData);
 
@@ -40,17 +56,14 @@ function VisualizationComponent({
   return (
     <div>
       <div className="flex flex-col justify-center">
-        <iframe
-          src={
-            "./citygml.html?url=https://devkluster.ehr.ee/api/3dtwin/v1/rest-api/citygml?type=terrain&bbox=6587732&bbox=542018&bbox=6587871&bbox=542128"
-          }
-        />
-        <iframe
-          src={`https://fotoladu.maaamet.ee/etak.php?${coords}`}
-          height={400}
-          className="flex my-4"
-        />
-        <img src={`https://kypilt.kataster.ee/api/${cadastralCode}`} />
+        <iframe src={`./citygml.html?url=${cityGmlUrl}`} height={400} />
+        <div className="flex my-4 justify-center">
+          <iframe
+            src={`https://fotoladu.maaamet.ee/etak.php?${coords}`}
+            className="mr-4"
+          />
+          <img src={`https://kypilt.kataster.ee/api/${cadastralCode}`} />
+        </div>
       </div>
     </div>
   );
