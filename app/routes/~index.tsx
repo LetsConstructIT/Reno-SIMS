@@ -8,6 +8,7 @@ import CostsComponent from "./CostsComponent";
 import RecomendationsComponent from "./RecomendationsComponent";
 import RestrictionsComponent from "./RestrictionsComponent";
 import VisualizationComponent from "./VisualizationComponent";
+import { BuildingInfo } from "./Services";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -17,12 +18,17 @@ function Home() {
   const router = useRouter();
   const state = Route.useLoaderData();
 
+  const [buildingInfo, setBuildingInfo] = useState<BuildingInfo | undefined>();
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
 
   function handleDataFromChild(city: string, address: string) {
     setCity(city);
     setAddress(address);
+  }
+
+  function handleNewBuildingInfo(buildingInfo: BuildingInfo) {
+    setBuildingInfo(buildingInfo);
   }
 
   return (
@@ -38,14 +44,18 @@ function Home() {
       <div className="flex">
         <div className="w-1/5 mx-8">
           <CardComponent title="Building data">
-            <BuildingInfoComponent />
+            <BuildingInfoComponent buildingInfo={buildingInfo} />
           </CardComponent>
           <CardComponent title="Restrictions">
             <RestrictionsComponent />
           </CardComponent>
         </div>
         <div className="w-3/5">
-          <VisualizationComponent address={address} city={city} />
+          <VisualizationComponent
+            address={address}
+            city={city}
+            sendBuildingInfoToParent={handleNewBuildingInfo}
+          />
         </div>
         <div className="w-1/5 mx-8">
           <CardComponent title="Recomendations">

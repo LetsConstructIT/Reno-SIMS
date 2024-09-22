@@ -11,9 +11,11 @@ import {
 function VisualizationComponent({
   address,
   city,
+  sendBuildingInfoToParent,
 }: {
   address: string;
   city: string;
+  sendBuildingInfoToParent: any;
 }) {
   const [coords, setCoords] = useState("x=542084&y=6587844");
   const [cadastralCode, setCadastralCode] = useState("78401:109:3120");
@@ -34,15 +36,14 @@ function VisualizationComponent({
       const bbox = calculateBoundingBox(buildingDataList);
       const extendedBbox = extendBoundingBox(bbox, 100);
 
-      console.log(extendedBbox);
       setCityGmlUrl(
         `https://devkluster.ehr.ee/api/3dtwin/v1/rest-api/citygml?type=terrain&bbox=${extendedBbox.minY}&bbox=${extendedBbox.minX}&bbox=${extendedBbox.maxY}&bbox=${extendedBbox.maxX}`,
       );
 
       const ehr = buildingCodes[0].toLocaleString(); //"101036328";
       const buildingData = await getBuildingInfo(ehr);
-      console.log(buildingData);
 
+      sendBuildingInfoToParent(buildingData);
       setCoords(`x=${buildingData.centerX}&y=${buildingData.centerY}`);
       setCadastralCode(buildingData.cadastralCode);
     };

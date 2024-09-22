@@ -75,6 +75,8 @@ export async function getBuildingInfo(ehrCode: string): Promise<BuildingInfo> {
     var designation = object.ehitis.ehitiseAndmed.nimetus;
     var propertyType = object.ehitis.ehitisePohiandmed.omandiLiikTxt;
     const year = object.ehitis.ehitiseAndmed.esmaneKasutus;
+
+    const ehr = object.ehitis.ehitiseKujud.ruumikuju[0].ehrKood;
     const x = object.ehitis.ehitiseKujud.ruumikuju[0].viitepunktX;
     const y = object.ehitis.ehitiseKujud.ruumikuju[0].viitepunktY;
     // should be sorted by date
@@ -95,6 +97,7 @@ export async function getBuildingInfo(ehrCode: string): Promise<BuildingInfo> {
     const info: BuildingInfo = {
       designation: designation,
       propertyType: propertyType,
+      ehr: ehr,
       year: year,
       centerX: x,
       centerY: y,
@@ -113,6 +116,7 @@ export async function getBuildingInfo(ehrCode: string): Promise<BuildingInfo> {
 export type BuildingInfo = {
   designation: string;
   propertyType: string;
+  ehr: number;
   year: string;
   centerX?: number;
   centerY?: number;
